@@ -1,6 +1,13 @@
-/*
-Name:                          MH_INSTRUMENTS.sql
-*/
+/* =============================================================================
+Name:                   MH_INSTRUMENTS.sql
+Version:		1.0
+
+Create table MH_INSTRUMENTS to store individual instrument details
+
+
+Vn History
+1.0   05 Nov 2020  Added Header
+============================================================================= */
 CREATE TABLE mh_instruments (
 instrument_id                NUMBER NOT NULL PRIMARY KEY,
 instrument_name              VARCHAR2(64) NOT NULL,
