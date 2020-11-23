@@ -1,3 +1,7 @@
+/*
+20 Nov 2020 - Updated view MHTMP1 so VALUE of 0 is returned as NULL - otherwise get divide by zero errors for zero value stock
+*/
+
 CREATE OR REPLACE VIEW MHTMP AS
 SELECT portfolio, price_date, 
   CASE price_date 
@@ -36,7 +40,7 @@ FROM (
 SELECT  i.portfolio, --pr.price_date, 
 d.label, 
 i.instrument_name, i.asset, i.sector, 
-  pr.value
+  CASE pr.value WHEN 0 THEN NULL ELSE pr.value END value
 FROM mh_instrument_prices pr
 , mh_instruments i
 , mhtmp d
