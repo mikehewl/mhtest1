@@ -6,7 +6,7 @@ Create table MH_INSTRUMENTS to store individual instrument details
 
 Vn History
 1.0   05 Nov 2020  Added Header
-1.01  23 Nov 2020  Added DEFAULT clause for col INSTRUMENT_ID
+1.01  23 Nov 2020  Added DEFAULT ON NULL clause for col INSTRUMENT_ID
 ============================================================================= */
 CREATE SEQUENCE mh_instruments_s 
   MINVALUE 1
@@ -18,7 +18,7 @@ CREATE SEQUENCE mh_instruments_s
 DROP SEQUENCE mh_instruments_s;
 
 CREATE TABLE mh_instruments (
-instrument_id                NUMBER DEFAULT MIKEH.MH_INSTRUMENTS_S.NEXTVAL NOT NULL PRIMARY KEY,
+instrument_id                NUMBER DEFAULT ON NULL MIKEH.MH_INSTRUMENTS_S.NEXTVAL NOT NULL PRIMARY KEY,
 instrument_name              VARCHAR2(64) NOT NULL,
 portfolio                    VARCHAR2(32) NOT NULL,
 instrument_currency          VARCHAR2(8),
