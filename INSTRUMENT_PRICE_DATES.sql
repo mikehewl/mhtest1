@@ -1,6 +1,6 @@
 /* =============================================================================
 Name:                   INSTRUMENT_PRICE_DATES.sql
-Version:		1.0
+Version:		1.02
 
 Views used to show Historical price changes
 
@@ -9,10 +9,13 @@ Vn History
                    otherwise get divide by zero errors for zero value stock
 1.01  08 Dec 2020  Updated view MHTMP - Added comments and included another 
                    level to improve performance
+1.02  09 Dec 2020  Changed to be based on Latest date, rather than SYSDATE
+1.03  10 Dec 2020  Calculate dates independent of Portfolio (should probably 
+                   get rid of portfolio from View)
 ============================================================================= */
 
 CREATE OR REPLACE VIEW MHTMP AS
-SELECT portfolio, price_date, 
+SELECT p.account portfolio, price_date, 
   CASE price_date 
     WHEN date1 THEN 'COL1'--'Latest: ' || TO_CHAR(date1)
     WHEN date2 THEN 'COL2'--'Previous: ' || TO_CHAR(date2)
@@ -21,23 +24,26 @@ SELECT portfolio, price_date,
     WHEN date5 THEN 'COL5'--'6 Month: ' || TO_CHAR(date5)
     WHEN date6 THEN 'COL6'--'Earliest: ' || TO_CHAR(date6)
   END label
-FROM (
+FROM (    
   SELECT  
-    ilv.portfolio, ilv.price_date,
-    trunc(sysdate) date1,
+    ilv.price_date,
+    TRUNC(latest_date) date1,
     --  Most recent (i.e. biggest) date prior to SYSDATE
-    max(price_date) keep (dense_rank first order by     case when ilv.price_date < TRUNC(SYSDATE) then ilv.price_date end desc nulls last) over (partition by ilv.portfolio) date2,
+    MAX(price_date) keep (dense_rank first order by case when ilv.price_date < TRUNC(latest_date) then ilv.price_date end desc nulls last) over () date2,
     -- Find date nearest to 7 days ago.  Calculate the difference  of the Price date from 7 days ago, and use ORDER BY on the differences to pick the date with the smallest difference
-    min(price_date) keep (dense_rank first order by abs(ilv.price_date - (trunc(sysdate) - 7))) over (partition by ilv.portfolio) date3,
-    min(price_date) keep (dense_rank first order by abs(price_date - trunc(add_months(sysdate, - 1)))) over (partition by portfolio) date4, 
-    min(price_date) keep (dense_rank first order by abs(price_date - trunc(add_months(sysdate, - 6)))) over (partition by portfolio) date5,
-    min(price_date) keep (dense_rank first order by price_date) over (partition by portfolio) date6
+    MIN(price_date) keep (dense_rank first order by abs(ilv.price_date - (trunc(latest_date) - 7))) over () date3,
+    MIN(price_date) keep (dense_rank first order by abs(price_date - trunc(add_months(latest_date, - 1)))) over () date4, 
+    MIN(price_date) keep (dense_rank first order by abs(price_date - trunc(add_months(latest_date, - 6)))) over () date5,
+    MIN(price_date) keep (dense_rank first order by price_date) over () date6
   FROM (
-    SELECT DISTINCT i.portfolio, pr.price_date
+    SELECT DISTINCT pr.price_date,
+      MAX(price_date) KEEP (DENSE_RANK FIRST ORDER BY pr.price_date DESC) OVER () latest_date
     FROM mh_instrument_prices pr
     ,  mh_instruments i
-    WHERE i.instrument_id = pr.instrument_id) ilv
+    WHERE i.instrument_id = pr.instrument_id
+    AND pr.price_date >= add_months(sysdate, -12)) ilv
   )
+  , mh_portfolios p
 WHERE 1 = 1
 AND (price_date = date1) OR (price_date = date2) OR (price_date = date3) OR (price_date = date4) OR (price_date = date5) OR (price_date = date6);
 
