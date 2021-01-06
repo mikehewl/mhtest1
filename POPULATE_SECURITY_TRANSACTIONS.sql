@@ -47,3 +47,24 @@ AND h.instrument_id(+) = i.instrument_id
 AND h.instrument_id IS NULL
 --
 AND csh.description like 'Purchase:%' || I.instrument_name || '%';
+
+-- Insert into diary
+INSERT INTO mh_instrument_history
+SELECT mh_instrument_history_s.nextval instrument_history_id,
+       i.instrument_id,
+       csh.cash_transaction_id cash_transaction_id,
+       'Initial Purchase' event_type,
+       csh.transaction_date EVENT_DATE,
+       csh.description description,
+       i.quantity quantity,
+       null unit_price,
+       null fee
+FROM mh_instruments i
+, mh_instrument_history h
+, mh_cash_transactions csh
+WHERE i.asset != 'CASH'
+--
+AND h.instrument_id(+) = i.instrument_id
+AND h.instrument_id IS NULL
+--
+AND csh.description like 'Purchase:%' || I.instrument_name || '%';
